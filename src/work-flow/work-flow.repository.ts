@@ -23,18 +23,34 @@ export class WorkFlowRepository {
     return await this.workflowRepository.save(createdWorkflow);
   }
 
-  async handleInboundNodeMessages(workFlowDto: InboundMessageDto) {
-    const workflowConfig = await this.workflowRepository.findOne({
-      where: { name: 'Hack-5' },
-      order: { createdAt: 'DESC' },
+  async findAll() {
+    return this.workflowRepository.find({ order: { createdAt: 'DESC' } });
+  }
+
+  async findById(id: string) {
+    const workflow = await this.workflowRepository.findOneBy({ id });
+    if (!workflow) throw new NotFoundException(`Workflow ${id} not found.`);
+    return workflow;
+  }
+
+  async handleInboundNodeMessages(workFlowDto: InboundMessageDto, workflowId?: string) {
+    // Resolve the session first so we can use its stored workflowId when no explicit id is given
+    let session = await this.workflowConversationRepository.findOneBy({
+      phoneNumber: workFlowDto.phoneNumber,
     });
+
+    const resolvedWorkflowId = workflowId ?? session?.workflowId;
+
+    const workflowConfig = resolvedWorkflowId
+      ? await this.workflowRepository.findOneBy({ id: resolvedWorkflowId })
+      : await this.workflowRepository.findOne({
+          where: { name: 'Hack-5' },
+          order: { createdAt: 'DESC' },
+        });
     if (!workflowConfig)
       throw new NotFoundException('Workflow configuration not found.');
 
     const workflowNodes = workflowConfig.nodes;
-    let session = await this.workflowConversationRepository.findOneBy({
-      phoneNumber: workFlowDto.phoneNumber,
-    });
 
     if (!session) {
       session = this.workflowConversationRepository.create({

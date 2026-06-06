@@ -67,4 +67,12 @@ export class CreateWorkFlowDto {
   })
   @IsObject()
   nodes: Record<string, any>;
+
+  @ApiProperty({
+    description: 'Raw React Flow graph data for canvas restoration',
+    required: false,
+  })
+  @IsObject()
+  @IsOptional()
+  reactFlowData?: { nodes: any[]; edges: any[] };
 }

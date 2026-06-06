@@ -10,7 +10,16 @@ export class WorkFlowService {
   async createWorkFlow(createWorkflowDto: CreateWorkFlowDto) {
     return this.workFlowRepository.create(createWorkflowDto);
   }
-  async handleInboundNodeMessages(workFlowDto: InboundMessageDto) {
-    return await this.workFlowRepository.handleInboundNodeMessages(workFlowDto);
+
+  async findAllWorkflows() {
+    return this.workFlowRepository.findAll();
+  }
+
+  async findWorkflowById(id: string) {
+    return this.workFlowRepository.findById(id);
+  }
+
+  async handleInboundNodeMessages(workFlowDto: InboundMessageDto, workflowId?: string) {
+    return await this.workFlowRepository.handleInboundNodeMessages(workFlowDto, workflowId);
   }
 }

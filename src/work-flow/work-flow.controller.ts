@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { WorkFlowService } from './work-flow.service';
 import { InboundMessageDto } from './_utils/dto/request/inbound-message.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -7,6 +7,18 @@ import { CreateWorkFlowDto } from './_utils/dto/request/create-work-flow.dto';
 @Controller('work-flow')
 export class WorkFlowController {
   constructor(private readonly workFlowService: WorkFlowService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List all saved workflows' })
+  async findAll() {
+    return this.workFlowService.findAllWorkflows();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a workflow by id' })
+  async findOne(@Param('id') id: string) {
+    return this.workFlowService.findWorkflowById(id);
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create a new workflow configuration' })
@@ -41,7 +53,7 @@ export class WorkFlowController {
       `🚀 Received live test request for number: ${body.phoneNumber}`,
     );
 
-    await this.workFlowService.createWorkFlow({
+    const saved = await this.workFlowService.createWorkFlow({
       name: body.name,
       entryNodeId: body.entryNodeId,
       nodes: body.nodes,
@@ -52,6 +64,6 @@ export class WorkFlowController {
       postbackData: body.entryNodeId,
     };
 
-    return await this.workFlowService.handleInboundNodeMessages(startDto);
+    return await this.workFlowService.handleInboundNodeMessages(startDto, saved.id);
   }
 }

@@ -20,6 +20,9 @@ export class Workflow {
   @Column({ type: 'json' })
   nodes: Record<string, WorkFlowNodeInterface>;
 
+  @Column({ type: 'json', nullable: true })
+  reactFlowData: { nodes: any[]; edges: any[] } | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }
