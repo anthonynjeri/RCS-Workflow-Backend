@@ -10,6 +10,10 @@ import { WorkFlowNodeInterface } from '../work-flow/_utils/interface/work-flow-n
 
 @Injectable()
 export class MessagingRepository {
+  private callBackMo =
+    'https://smsmode-hack-team-5.ngrok.dev/rcs-workflow-backend-api/webhooks/rcs/mo';
+  private callBackStatus =
+    'https://smsmode-hack-team-5.ngrok.dev/rcs-workflow-backend-api/webhooks/rcs/status';
   private rcsClient: SmsmodeRcsClient;
   constructor(
     private configService: ConfigService<EnvironmentVariables, true>,
@@ -25,10 +29,8 @@ export class MessagingRepository {
     const message = await this.rcsClient.send({
       recipient: { to: `${messageDto.phoneNumber}` },
       body: { type: 'TEXT', text: messageDto.message },
-      callbackUrlMo:
-        'https://smsmode-hack-team-5.ngrok.dev/Rcs-Workflow-Backend-API/webhooks/rcs/mo',
-      callbackUrlStatus:
-        'https://smsmode-hack-team-5.ngrok.dev/Rcs-Workflow-Backend-API/webhooks/rcs/status',
+      callbackUrlMo: this.callBackMo,
+      callbackUrlStatus: this.callBackStatus,
     });
 
     console.log(message);
@@ -50,10 +52,8 @@ export class MessagingRepository {
           },
         ],
       },
-      callbackUrlMo:
-        'https://smsmode-hack-team-5.ngrok.dev/Rcs-Workflow-Backend-API/webhooks/rcs/mo',
-      callbackUrlStatus:
-        'https://smsmode-hack-team-5.ngrok.dev/Rcs-Workflow-Backend-API/webhooks/rcs/status',
+      callbackUrlMo: this.callBackMo,
+      callbackUrlStatus: this.callBackStatus,
     });
 
     return message;
@@ -69,7 +69,9 @@ export class MessagingRepository {
       ...(node.cardWidth && { cardWidth: node.cardWidth }),
       ...(node.content && { content: this.formatCardContent(node.content) }),
       ...(node.contents && {
-        contents: node.contents.map((c) => this.formatCardContent(c)),
+        contents: node.contents.map((cardContent) =>
+          this.formatCardContent(cardContent),
+        ),
       }),
     };
 
@@ -83,10 +85,8 @@ export class MessagingRepository {
       return await this.rcsClient.send({
         recipient: { to: phoneNumber },
         body: payload,
-        callbackUrlMo:
-          'https://smsmode-hack-team-5.ngrok.dev/Rcs-Workflow-Backend-API/webhooks/rcs/mo',
-        callbackUrlStatus:
-          'https://smsmode-hack-team-5.ngrok.dev/Rcs-Workflow-Backend-API/webhooks/rcs/status',
+        callbackUrlMo: this.callBackMo,
+        callbackUrlStatus: this.callBackStatus,
       });
     } catch (error) {
       console.error(
@@ -119,8 +119,8 @@ export class MessagingRepository {
       ...(content.description && { description: content.description }),
       ...(content.media && { media: content.media }),
       ...(content.suggestions && {
-        suggestions: content.suggestions.map((s: any) =>
-          this.formatSuggestion(s),
+        suggestions: content.suggestions.map((suggestion: any) =>
+          this.formatSuggestion(suggestion),
         ),
       }),
     };

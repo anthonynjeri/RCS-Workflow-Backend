@@ -30,8 +30,12 @@ export class WebhooksController {
     return { received: true };
   }
 
-  @Get('status')
-  handleMessageStatus() {
+  @Post('status')
+  handleMessageStatus(@Body() payload: any) {
+    console.log(
+      'Incoming Status Payload from smsmode:',
+      JSON.stringify(payload, null, 2),
+    );
     return { received: true };
   }
 }

@@ -7,7 +7,6 @@ import { validateEnv } from './_utils/config/env.config';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { WorkFlowModule } from './work-flow/work-flow.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -21,7 +20,6 @@ import { UserModule } from './user/user.module';
     ConfigModule.forRoot({ validate: validateEnv, isGlobal: true }),
     WebhooksModule,
     WorkFlowModule,
-    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],

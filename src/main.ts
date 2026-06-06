@@ -12,7 +12,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
   app
-    .setGlobalPrefix('Rcs-Workflow-Backend-API')
+    .setGlobalPrefix('rcs-workflow-backend-api')
     .useGlobalPipes(new ValidationPipe(ValidationPipeOptionsConfig))
     .enableCors();
 

@@ -84,7 +84,8 @@ export class WorkFlowRepository {
             currentNode.content.suggestions.length > 0) ||
           (currentNode.contents &&
             currentNode.contents.some(
-              (c) => c.suggestions && c.suggestions.length > 0,
+              (cardContent) =>
+                cardContent.suggestions && cardContent.suggestions.length > 0,
             ));
 
         if (!hasOutboundRoutes) {
@@ -109,11 +110,11 @@ export class WorkFlowRepository {
       }
     }
 
-    console.log('--- ROUTING ROUTINE DIAGNOSTIC ---');
-    console.log(`Phone: ${workFlowDto.phoneNumber}`);
-    console.log(`Current position in DB: ${session.currentNodeId}`);
-    console.log(`Targeting next node: ${nextNodeKey}`);
-    console.log('----------------------------------');
+    // console.log('--- ROUTING ROUTINE DIAGNOSTIC ---');
+    // console.log(`Phone: ${workFlowDto.phoneNumber}`);
+    // console.log(`Current position in DB: ${session.currentNodeId}`);
+    // console.log(`Targeting next node: ${nextNodeKey}`);
+    // console.log('----------------------------------');
 
     const nodeToSend = workflowNodes[nextNodeKey];
     if (!nodeToSend)
