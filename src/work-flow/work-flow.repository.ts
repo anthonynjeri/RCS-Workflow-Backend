@@ -33,7 +33,10 @@ export class WorkFlowRepository {
     return workflow;
   }
 
-  async handleInboundNodeMessages(workFlowDto: InboundMessageDto, workflowId?: string) {
+  async handleInboundNodeMessages(
+    workFlowDto: InboundMessageDto,
+    workflowId?: string,
+  ) {
     // Resolve the session first so we can use its stored workflowId when no explicit id is given
     let session = await this.workflowConversationRepository.findOneBy({
       phoneNumber: workFlowDto.phoneNumber,
@@ -59,6 +62,14 @@ export class WorkFlowRepository {
         workflowId: workflowConfig.id,
       });
       await this.workflowConversationRepository.save(session);
+    } else if (workflowId && session.workflowId !== workflowId) {
+      // A new workflow is being sent to this user — reset their session
+      session.currentNodeId = workflowConfig.entryNodeId;
+      session.workflowId = workflowConfig.id;
+      await this.workflowConversationRepository.update(
+        { phoneNumber: workFlowDto.phoneNumber },
+        { currentNodeId: workflowConfig.entryNodeId, workflowId: workflowConfig.id },
+      );
     }
 
     const currentNode = workflowNodes[session.currentNodeId];

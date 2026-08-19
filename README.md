@@ -1,98 +1,138 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# RCS Workflow Backend — Hackathon Équipe 5
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend NestJS pour créer, stocker et exécuter des workflows de conversation RCS (Rich Communication Services) interactifs. Développé pour le **Hackathon smsmode France**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## Ce que ça fait
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Permet de créer un workflow de conversation en arbre (question → réponses → question suivante) et de le délivrer sur le téléphone d'un utilisateur via RCS. L'utilisateur navigue dans le workflow en appuyant sur des boutons de réponse. Le backend suit la position de chaque utilisateur dans la conversation et le redirige vers le bon nœud suivant.
 
-## Project setup
+---
 
-```bash
-$ npm install
+## Stack technique
+
+| Couche | Technologie |
+|---|---|
+| Framework | NestJS + Express |
+| Base de données | SQLite via `better-sqlite3` + TypeORM |
+| Messagerie RCS | `@smsmode/rcs` |
+| Tunnel (dev) | ngrok — `https://smsmode-hack-team-5.ngrok.dev` |
+| Documentation API | Swagger — `/api` |
+
+---
+
+## Architecture
+
+```
+src/
+├── work-flow/       # CRUD des workflows, routage des conversations
+├── messaging/       # Envoi de messages RCS (texte, carte, carousel)
+├── webhooks/        # Événements RCS entrants (réponses utilisateur, statuts)
+└── _utils/          # Configuration et validation des variables d'environnement
 ```
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ npm run start
+## Endpoints API
 
-# watch mode
-$ npm run start:dev
+### Workflows
 
-# production mode
-$ npm run start:prod
+| Méthode | Chemin | Description |
+|---|---|---|
+| `GET` | `/rcs-workflow-backend-api/work-flow` | Lister tous les workflows sauvegardés |
+| `GET` | `/rcs-workflow-backend-api/work-flow/:id` | Récupérer un workflow par son ID |
+| `POST` | `/rcs-workflow-backend-api/work-flow` | Créer et sauvegarder un workflow nommé |
+| `POST` | `/rcs-workflow-backend-api/work-flow/start-conversation` | Démarrer ou continuer une conversation pour un numéro de téléphone |
+| `POST` | `/rcs-workflow-backend-api/work-flow/test-send` | Créer un workflow et l'envoyer immédiatement à un téléphone |
+
+### Messagerie
+
+| Méthode | Chemin | Description |
+|---|---|---|
+| `POST` | `/rcs-workflow-backend-api/callbacks/sendMessage` | Envoyer un message RCS texte simple |
+| `POST` | `/rcs-workflow-backend-api/callbacks/cardMessage` | Envoyer un message RCS de type carte |
+
+### Webhooks (entrants depuis smsmode)
+
+| Méthode | Chemin | Description |
+|---|---|---|
+| `POST` | `/rcs-workflow-backend-api/webhooks/rcs/mo` | Recevoir les réponses utilisateur et avancer leur position dans le workflow |
+| `POST` | `/rcs-workflow-backend-api/webhooks/rcs/status` | Recevoir les mises à jour de statut de livraison/lecture |
+
+---
+
+## Format du payload workflow
+
+```json
+{
+  "name": "Onboarding client",
+  "entryNodeId": "node_root_primary",
+  "nodes": {
+    "node_root_primary": {
+      "type": "TEXT",
+      "text": "Bienvenue ! Que souhaitez-vous faire ?",
+      "suggestions": [
+        { "type": "REPLY", "text": "En savoir plus", "postbackData": "EN_SAVOIR_PLUS", "nextNode": "info_node" },
+        { "type": "REPLY", "text": "Support", "postbackData": "SUPPORT", "nextNode": "support_node" }
+      ]
+    },
+    "info_node": {
+      "type": "TEXT",
+      "text": "Voici toutes les informations...",
+      "suggestions": []
+    },
+    "support_node": {
+      "type": "TEXT",
+      "text": "Un agent vous contactera sous 24h.",
+      "suggestions": []
+    }
+  }
+}
 ```
 
-## Run tests
+Le champ optionnel `reactFlowData` stocke le graphe brut du canvas frontend pour une restauration complète dans l'éditeur visuel.
 
-```bash
-# unit tests
-$ npm run test
+---
 
-# e2e tests
-$ npm run test:e2e
+## Routage des conversations
 
-# test coverage
-$ npm run test:cov
+1. Un workflow est envoyé à un utilisateur via `test-send` — sa session est créée en base de données
+2. Quand il appuie sur un bouton de réponse, le webhook se déclenche avec son `postbackData`
+3. Le backend le fait correspondre à une suggestion, suit `nextNode` et envoie le message suivant
+4. Si un utilisateur reçoit un **nouveau workflow**, sa session est automatiquement réinitialisée au nœud d'entrée du nouveau workflow
+
+---
+
+## Schéma de la base de données
+
+```sql
+-- Définitions des workflows
+CREATE TABLE "work-flow" (
+  "id"            varchar PRIMARY KEY,
+  "name"          varchar NOT NULL,
+  "entryNodeId"   varchar NOT NULL DEFAULT 'START',
+  "nodes"         json NOT NULL,
+  "reactFlowData" json,             -- graphe canvas pour restauration frontend
+  "createdAt"     datetime NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Sessions utilisateurs actives
+CREATE TABLE "workflow_conversation" (
+  "phoneNumber"      varchar PRIMARY KEY,
+  "currentNodeId"    varchar NOT NULL DEFAULT 'START',
+  "workflowId"       varchar NOT NULL,
+  "lastInteraction"  datetime NOT NULL DEFAULT (datetime('now'))
+);
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Lancer en local
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm install
+npm run start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Nécessite un fichier `.env` avec vos identifiants API smsmode. Le serveur démarre sur le port `PORT` (3000 par défaut).

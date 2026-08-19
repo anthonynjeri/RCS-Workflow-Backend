@@ -19,7 +19,13 @@ export class WorkFlowService {
     return this.workFlowRepository.findById(id);
   }
 
-  async handleInboundNodeMessages(workFlowDto: InboundMessageDto, workflowId?: string) {
-    return await this.workFlowRepository.handleInboundNodeMessages(workFlowDto, workflowId);
+  async handleInboundNodeMessages(
+    workFlowDto: InboundMessageDto,
+    workflowId?: string,
+  ) {
+    return await this.workFlowRepository.handleInboundNodeMessages(
+      workFlowDto,
+      workflowId,
+    );
   }
 }

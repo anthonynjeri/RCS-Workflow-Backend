@@ -64,6 +64,9 @@ export class WorkFlowController {
       postbackData: body.entryNodeId,
     };
 
-    return await this.workFlowService.handleInboundNodeMessages(startDto, saved.id);
+    return await this.workFlowService.handleInboundNodeMessages(
+      startDto,
+      saved.id,
+    );
   }
 }
